@@ -1,10 +1,115 @@
 from Tkinter import *
 import os, datetime
-import json
+import json, difflib, tkMessageBox
 
 dirpath = os.path.dirname(__file__)
 data_folder = 'data'
 datapath = dirpath + data_folder + '/'
+
+class SearchCode(object):
+	"""
+	window to search all the existing json files
+	"""
+
+	def __init__(self):
+		self.search_window = Tk()
+		self.search_window.title("Get Your Code | Code Vault")
+
+		self.row1 = Frame(self.search_window, pady=15)
+		self.row1.pack()
+
+		# Set up dropdown menu to choose from language available
+		language_list = self.get_languages_from_files()
+		self.languages = StringVar(self.search_window)
+		try:
+			self.languages.set(language_list[0]) # default value
+		except Exception, e:
+			# When language list is empty and no search data is found
+			# Show a tkinter msg box about no data found
+			tkMessageBox.showerror("No previous data found", "No previously saved code data found. Please save some code snippets First.")
+			# Redirect to save new code page
+			# ----- Do something to kill this page
+			SaveCode()
+
+		self.language_lab = Label(self.row1, text='Language : ')
+		self.language_lab.pack(side='left')
+		self.language_ent = OptionMenu(self.row1, self.languages, *language_list)
+		self.language_ent.pack(side='left')
+
+
+		self.title_lab = Label(self.row1, text='Title : ', padx=15)
+		self.title_lab.pack(side='left')
+		self.title_ent = Entry(self.row1, width = 30 )
+		self.title_ent.pack(side='left')
+
+		self.row2 = Frame(self.search_window, pady=15,padx=15)
+		self.row2.pack()
+
+		self.search_bu = Button(self.row2, text="Search",command=self.search_code)
+		self.search_bu.pack(side="left")
+		self.cancel_bu = Button(self.row2, text="Cancel",command=self.search_code)
+		self.cancel_bu.pack(side="left")
+
+		self.row3 = Frame(self.search_window)
+		self.row3.pack()
+
+		self.search_window.geometry("900x600")
+		self.search_window.mainloop()
+
+	def get_languages_from_files(self):
+		datafile_names = os.listdir(datapath)
+		clean_names = []
+		for filename in datafile_names:
+			if filename.endswith('.json'):
+				clean_names.append(filename[:-5])
+		return clean_names
+
+
+	def get_file_data(self):
+		filepath = datapath + self.languages.get() + ".json"
+		try:
+			with open( filepath ) as data_file:
+				data = json.load( data_file )
+		except Exception, e:
+			data = []
+		return data
+
+	def search_code(self):
+		title = self.title_ent.get()
+		data = self.get_file_data()
+		self.search_data = []
+
+		compare = difflib.SequenceMatcher()
+		compare.set_seq1(title)
+
+		for snippet in data:
+			compare.set_seq2(snippet['title'])
+			rate = compare.ratio()
+			if rate > 0.45:
+				self.search_data.append(snippet)
+		# import pdb; pdb.set_trace()
+		# Show this data on a clickable format
+		self.show_data()
+
+	def show_data(self):
+		"""
+		Takes search data as an input and shows it all to list box
+		"""
+		self.result_box = Listbox(self.row3, width=60)
+		self.result_box.pack()
+		
+		for data_fragment in self.search_data:
+			self.result_box.insert(END, data_fragment['title'])
+
+		self.result_box.bind("<Double-Button-1>", self.open_search_item)
+
+	def open_search_item(self, event):
+		# get index of the element that was clicked
+		clicked_on = self.result_box.curselection()[0]
+		selected = self.search_data[clicked_on]
+		# selected containes the data to be shown
+		
+
 
 class SaveCode(object):
 	"""
@@ -110,4 +215,7 @@ class SaveCode(object):
 
 
 if __name__ == '__main__':
-	appStarter = SaveCode()
+	appStarter = SearchCode()
+
+
+
