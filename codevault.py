@@ -1,3 +1,12 @@
+"""
+Next to- dos:
+
+	- Check for list box multiple select option
+	  Add utility that user can select multiple search results and open all of them with same event bind
+	- Design finale flow of the application
+	- Add security and robustness of the input widgets
+"""
+
 from Tkinter import *
 import os, datetime
 import json, difflib, tkMessageBox
@@ -24,12 +33,12 @@ class SearchCode(object):
 		try:
 			self.languages.set(language_list[0]) # default value
 		except Exception, e:
-			# When language list is empty and no search data is found
-			# Show a tkinter msg box about no data found
-			tkMessageBox.showerror("No previous data found", "No previously saved code data found. Please save some code snippets First.")
 			# Redirect to save new code page
 			# ----- Do something to kill this page
 			SaveCode()
+			# When language list is empty and no search data is found
+			# Show a tkinter msg box about no data found
+			tkMessageBox.showerror("No previous data found", "No previously saved code data found. Please save some code snippets First.")
 
 		self.language_lab = Label(self.row1, text='Language : ')
 		self.language_lab.pack(side='left')
@@ -53,10 +62,15 @@ class SearchCode(object):
 		self.row3 = Frame(self.search_window)
 		self.row3.pack()
 
+		self.result_box = Listbox(self.row3, width=60)
+
 		self.search_window.geometry("900x600")
 		self.search_window.mainloop()
 
 	def get_languages_from_files(self):
+		"""
+		Used to fill options menu with languages
+		"""
 		datafile_names = os.listdir(datapath)
 		clean_names = []
 		for filename in datafile_names:
@@ -66,6 +80,13 @@ class SearchCode(object):
 
 
 	def get_file_data(self):
+		"""
+		Get json data from a file
+
+		Takes language input from language entry widget and
+		opens appropreate language file. Returns language data
+		as a dictionary
+		"""
 		filepath = datapath + self.languages.get() + ".json"
 		try:
 			with open( filepath ) as data_file:
@@ -75,9 +96,17 @@ class SearchCode(object):
 		return data
 
 	def search_code(self):
+		"""
+		Function called by search Button
+
+		Takes input from title entry widget and compares it with
+		all titles available in data file of that language
+		shows all data that match nearly 45% and show it on a list box
+		"""
 		title = self.title_ent.get()
 		data = self.get_file_data()
 		self.search_data = []
+		self.result_box.delete(0, END)
 
 		compare = difflib.SequenceMatcher()
 		compare.set_seq1(title)
@@ -89,14 +118,8 @@ class SearchCode(object):
 				self.search_data.append(snippet)
 		# import pdb; pdb.set_trace()
 		# Show this data on a clickable format
-		self.show_data()
-
-	def show_data(self):
-		"""
-		Takes search data as an input and shows it all to list box
-		"""
-		self.result_box = Listbox(self.row3, width=60)
-		self.result_box.pack()
+		if not self.result_box.winfo_manager():
+			self.result_box.pack()
 		
 		for data_fragment in self.search_data:
 			self.result_box.insert(END, data_fragment['title'])
@@ -104,12 +127,47 @@ class SearchCode(object):
 		self.result_box.bind("<Double-Button-1>", self.open_search_item)
 
 	def open_search_item(self, event):
+		"""
+		Function called on double click to an item on list box
+
+		gets preciese data that was clicked and shows it
+		on a new Toplevel window, that has facility to copy codes
+		on Button click
+		"""
 		# get index of the element that was clicked
 		clicked_on = self.result_box.curselection()[0]
 		selected = self.search_data[clicked_on]
 		# selected containes the data to be shown
-		
+		# Show it in another top level window
+		self.top = Toplevel(height=200, width=150)
+		self.top.title(selected['title'])
 
+		top_frame = Frame(self.top)
+		top_frame.pack()
+
+		code_lab = Label( top_frame, text='Code : ', pady=10)
+		code_lab.pack(side='top')
+		code_box = Text( top_frame, width=120, height=10, background="#555555", foreground="white", wrap = "word", pady=10, padx=5 )
+		code_box.pack(side='top')
+		code_box.insert(0.0, selected['code'])
+
+		code_bu = Button(top_frame, text='Copy Code',padx=10, pady=20,width=15, command=lambda:self.copy_to_clipboard(selected['code']))
+		code_bu.pack(side='top')
+
+		example_lab = Label( top_frame, text='Example Code : ', pady=10)
+		example_lab.pack(side='top')
+		example_ent = Text( top_frame, width=120, height=10, background="#555555", foreground="white", wrap = "word", pady=10, padx=5 )
+		example_ent.pack(side='top')
+		example_ent.insert(0.0, selected['example'])
+
+		example_bu = Button(top_frame, text='Copy Example Code',padx=10, pady=20,width=15, command=lambda:self.copy_to_clipboard(selected['example']))
+		example_bu.pack(side='top')
+
+	def copy_to_clipboard(self,data):
+		self.search_window.clipboard_clear()
+		self.search_window.clipboard_append(data)
+
+		
 
 class SaveCode(object):
 	"""
