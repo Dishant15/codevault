@@ -6,16 +6,6 @@
 #
 """
 
-"""
-Next to- dos:
-
-	- Check for list box multiple select option
-	  Add utility that user can select multiple search results and open all of them with same event bind
-	- Add security and robustness of the input widgets
-	- Show all code entries for a language
-		- edit/delete options for selected code snippets
-"""
-
 from Tkinter import *
 import os, datetime
 import json, difflib, tkMessageBox
