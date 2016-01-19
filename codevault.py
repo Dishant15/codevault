@@ -3,8 +3,9 @@ Next to- dos:
 
 	- Check for list box multiple select option
 	  Add utility that user can select multiple search results and open all of them with same event bind
-	- Design finale flow of the application
 	- Add security and robustness of the input widgets
+	- Show all code entries for a language
+		- edit/delete options for selected code snippets
 """
 
 from Tkinter import *
@@ -20,8 +21,8 @@ class SearchCode(object):
 	window to search all the existing json files
 	"""
 
-	def __init__(self):
-		self.search_window = Tk()
+	def __init__(self, master):
+		self.search_window = master
 		self.search_window.title("Get Your Code | Code Vault")
 
 		self.row1 = Frame(self.search_window, pady=15)
@@ -56,13 +57,21 @@ class SearchCode(object):
 
 		self.search_bu = Button(self.row2, text="Search",command=self.search_code)
 		self.search_bu.pack(side="left")
-		self.cancel_bu = Button(self.row2, text="Cancel",command=self.search_code)
+		self.cancel_bu = Button(self.row2, text="Cancel",command=self.clear_all_widgets)
 		self.cancel_bu.pack(side="left")
 
 		self.row3 = Frame(self.search_window)
 		self.row3.pack()
 
 		self.result_box = Listbox(self.row3, width=60)
+
+		self.bot = Frame(self.search_window, pady=15,padx=15)
+		self.bot.pack(side="bottom")
+
+		self.quit = Button(self.bot, text="Quit", padx=10, pady=20,width=15,command=self.search_window.destroy)
+		self.quit.pack(side='left')
+		self.add_code = Button(self.bot, text="Save Code", padx=10, pady=20,width=15,command=lambda:SaveCode())
+		self.add_code.pack(side="left")
 
 		self.search_window.geometry("900x600")
 		self.search_window.mainloop()
@@ -109,10 +118,10 @@ class SearchCode(object):
 		self.result_box.delete(0, END)
 
 		compare = difflib.SequenceMatcher()
-		compare.set_seq1(title)
+		compare.set_seq1(title.lower())
 
 		for snippet in data:
-			compare.set_seq2(snippet['title'])
+			compare.set_seq2(snippet['title'].lower())
 			rate = compare.ratio()
 			if rate > 0.45:
 				self.search_data.append(snippet)
@@ -139,7 +148,7 @@ class SearchCode(object):
 		selected = self.search_data[clicked_on]
 		# selected containes the data to be shown
 		# Show it in another top level window
-		self.top = Toplevel(height=200, width=150)
+		self.top = Toplevel()
 		self.top.title(selected['title'])
 
 		top_frame = Frame(self.top)
@@ -163,9 +172,19 @@ class SearchCode(object):
 		example_bu = Button(top_frame, text='Copy Example Code',padx=10, pady=20,width=15, command=lambda:self.copy_to_clipboard(selected['example']))
 		example_bu.pack(side='top')
 
+		quit = Button(top_frame, text="Done", padx=10, pady=20,width=15,command=self.top.destroy)
+		quit.pack(side='bottom')
+
+		self.top.geometry("900x600")
+
 	def copy_to_clipboard(self,data):
 		self.search_window.clipboard_clear()
 		self.search_window.clipboard_append(data)
+
+	def clear_all_widgets(self):
+		self.title_ent.delete(0,END)
+		# if not self.result_box.winfo_manager():
+		self.result_box.pack_forget()
 
 		
 
@@ -177,7 +196,7 @@ class SaveCode(object):
 	# appHighlightFont = font.Font(family='Helvetica', size=12, weight='bold')
 
 	def __init__(self):
-		self.save_window = Tk()
+		self.save_window = Toplevel()
 		self.save_window.title("Save Your Code | Code Vault")
 
 
@@ -227,10 +246,11 @@ class SaveCode(object):
 
 		self.save_but = Button(self.row4, text='Cancel',padx=10, pady=20,width=15, command=self.clear_all_widgets)
 		self.save_but.pack(side='left')
+
+		self.quit = Button(self.row4, text="Quit", padx=10, pady=20,width=15,command=self.save_window.destroy)
+		self.quit.pack(side='bottom')
 		
 		self.save_window.geometry("900x600")
-
-		self.save_window.mainloop()
 
 
 	def save_code(self):
@@ -273,7 +293,7 @@ class SaveCode(object):
 
 
 if __name__ == '__main__':
-	appStarter = SearchCode()
 
-
+	root = Tk()
+	SearchCode(root)
 
