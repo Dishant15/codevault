@@ -1,4 +1,12 @@
 """
+#
+# File : CODEVAULT PY
+# @author : Dishant Chavda
+# date : 11-01-2016
+#
+"""
+
+"""
 Next to- dos:
 
 	- Check for list box multiple select option
@@ -25,9 +33,6 @@ class SearchCode(object):
 		self.search_window = master
 		self.search_window.title("Get Your Code | Code Vault")
 
-		self.row1 = Frame(self.search_window, pady=15)
-		self.row1.pack()
-
 		# Set up dropdown menu to choose from language available
 		language_list = self.get_languages_from_files()
 		self.languages = StringVar(self.search_window)
@@ -35,11 +40,13 @@ class SearchCode(object):
 			self.languages.set(language_list[0]) # default value
 		except Exception, e:
 			# Redirect to save new code page
-			# ----- Do something to kill this page
-			SaveCode()
+			SaveCode(master)
 			# When language list is empty and no search data is found
-			# Show a tkinter msg box about no data found
-			tkMessageBox.showerror("No previous data found", "No previously saved code data found. Please save some code snippets First.")
+			# Go to the savecode page with master argument
+			return
+
+		self.row1 = Frame(self.search_window, pady=15)
+		self.row1.pack()
 
 		self.language_lab = Label(self.row1, text='Language : ')
 		self.language_lab.pack(side='left')
@@ -195,8 +202,12 @@ class SaveCode(object):
 
 	# appHighlightFont = font.Font(family='Helvetica', size=12, weight='bold')
 
-	def __init__(self):
-		self.save_window = Toplevel()
+	def __init__(self, master=None):
+		if master:
+			self.save_window = master
+		else:
+			self.save_window = Toplevel()
+
 		self.save_window.title("Save Your Code | Code Vault")
 
 
@@ -252,6 +263,11 @@ class SaveCode(object):
 		
 		self.save_window.geometry("900x600")
 
+		if master:
+			# Main loop of master will run from this window only when first time code
+			# creation is done and master argument is handeled by this window
+			self.save_window.mainloop()
+
 
 	def save_code(self):
 		filepath = datapath + self.language_ent.get() + ".json"
@@ -293,6 +309,10 @@ class SaveCode(object):
 
 
 if __name__ == '__main__':
+
+	if not os.path.exists(datapath):
+		# Create new data directory if it does not exist
+		os.makedirs(datapath)
 
 	root = Tk()
 	SearchCode(root)
