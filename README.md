@@ -12,5 +12,5 @@ Future Expansion :-
 	- Add security and robustness of the input widgets
 	- Show all code entries for a language
 		- edit/delete options for selected code snippets
-	- Refresh facility on searchcode window after new save happens so it can be searched without rebooting app
 	- Syntex highlighting in the code boxes
+	- Language search box auto complete from language list

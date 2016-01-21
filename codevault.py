@@ -13,8 +13,23 @@ import json, difflib, tkMessageBox
 dirpath = os.path.dirname(__file__)
 data_folder = 'data'
 datapath = dirpath + data_folder + '/'
-main_window = None
+
+# Variable used to takle first time save of code snippet
 no_data_yet = False
+main_window = None
+
+def get_languages_from_files():
+	"""
+	Used to fill options menu with languages
+	"""
+	datafile_names = os.listdir(datapath)
+	clean_names = []
+	for filename in datafile_names:
+		if filename.endswith('.json'):
+			clean_names.append(filename[:-5])
+	return clean_names
+
+language_list = []
 
 class SearchCode(object):
 	"""
@@ -22,19 +37,20 @@ class SearchCode(object):
 	"""
 
 	def __init__(self, master):
-		global no_data_yet
+		global no_data_yet, language_list, main_window
+
+		main_window = self
 
 		self.search_window = master
 		self.search_window.title("Get Your Code | Code Vault")
 
 		# Set up dropdown menu to choose from language available
-		language_list = self.get_languages_from_files()
-		self.languages = StringVar(self.search_window)
+		self.language = StringVar(self.search_window)   # variable to save the state of option menu for languages
 		try:
-			self.languages.set(language_list[0]) # default value
+			self.language.set(language_list[0]) # default value
 		except Exception, e:
 			# Redirect to save new code page
-			no_data_yet = True
+			no_data_yet = True   # This is a first time code save event
 			SaveCode(master)
 			# When language list is empty and no search data is found
 			# Go to the savecode page with master argument
@@ -45,7 +61,7 @@ class SearchCode(object):
 
 		self.language_lab = Label(self.row1, text='Language : ')
 		self.language_lab.pack(side='left')
-		self.language_ent = OptionMenu(self.row1, self.languages, *language_list)
+		self.language_ent = OptionMenu(self.row1, self.language, *language_list)
 		self.language_ent.pack(side='left')
 
 
@@ -79,17 +95,6 @@ class SearchCode(object):
 		self.search_window.geometry("900x600")
 		self.search_window.mainloop()
 
-	def get_languages_from_files(self):
-		"""
-		Used to fill options menu with languages
-		"""
-		datafile_names = os.listdir(datapath)
-		clean_names = []
-		for filename in datafile_names:
-			if filename.endswith('.json'):
-				clean_names.append(filename[:-5])
-		return clean_names
-
 
 	def get_file_data(self):
 		"""
@@ -99,7 +104,7 @@ class SearchCode(object):
 		opens appropreate language file. Returns language data
 		as a dictionary
 		"""
-		filepath = datapath + self.languages.get() + ".json"
+		filepath = datapath + self.language.get() + ".json"
 		try:
 			with open( filepath ) as data_file:
 				data = json.load( data_file )
@@ -189,6 +194,15 @@ class SearchCode(object):
 		self.title_ent.delete(0,END)
 		self.result_box.pack_forget()
 
+	def refresh_languages(self):
+		global language_list
+		import Tkinter as tk
+		self.language_ent['menu'].delete(0, 'end')
+
+		# Insert list of new options (tk._setit hooks them up to var)
+		for lang in language_list:
+			self.language_ent['menu'].add_command(label=lang, command=tk._setit(self.language, lang))
+
 		
 
 class SaveCode(object):
@@ -255,6 +269,7 @@ class SaveCode(object):
 		self.cancel_but.pack(side='left')
 
 		if not no_data_yet:
+			# Don't show the button to go to the search window when there is no data to search
 			self.search_but = Button(self.save_window, text='Search Vault',padx=10, pady=20,width=15, command=self.open_search_window)
 			self.search_but.pack(side='bottom')
 
@@ -270,9 +285,11 @@ class SaveCode(object):
 
 
 	def save_code(self):
-		global no_data_yet
+		global no_data_yet,language_list, main_window
 
-		filepath = datapath + self.language_ent.get() + ".json"
+		language = self.language_ent.get()
+
+		filepath = datapath + language + ".json"
 		# read data from file if available
 		try:
 			with open( filepath ) as data_file:
@@ -298,19 +315,24 @@ class SaveCode(object):
 		except Exception, e:
 			print e
 
-		self.clear_all_widgets()
-
 		# import pdb; pdb.set_trace()
 		if no_data_yet:
+			# First time data saved , enable search button now
 			no_data_yet = False
 			self.search_but = Button(self.save_window, text='Search',padx=10, pady=20,width=15, command=self.open_search_window)
 			self.search_but.pack(side="bottom")
+		else:
+			# Refresh options menu in search window if code for new language added
+			if language not in language_list:
+				language_list.append(language)
+				main_window.refresh_languages()
+
+		self.clear_all_widgets()
 
 	def open_search_window(self):
-		global main_window
 		self.save_window.destroy()
 		root = Tk()
-		main_window = SearchCode(root)
+		SearchCode(root)
 
 
 	def clear_all_widgets(self):
@@ -323,12 +345,14 @@ class SaveCode(object):
 
 
 if __name__ == '__main__':
-	global main_window
+	global language_list
 
 	if not os.path.exists(datapath):
 		# Create new data directory if it does not exist
 		os.makedirs(datapath)
+	else:
+		language_list = get_languages_from_files()
 
 	root = Tk()
-	main_window = SearchCode(root)
+	SearchCode(root)
 
