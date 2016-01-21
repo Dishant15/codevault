@@ -13,6 +13,8 @@ import json, difflib, tkMessageBox
 dirpath = os.path.dirname(__file__)
 data_folder = 'data'
 datapath = dirpath + data_folder + '/'
+main_window = None
+no_data_yet = False
 
 class SearchCode(object):
 	"""
@@ -20,6 +22,8 @@ class SearchCode(object):
 	"""
 
 	def __init__(self, master):
+		global no_data_yet
+
 		self.search_window = master
 		self.search_window.title("Get Your Code | Code Vault")
 
@@ -30,6 +34,7 @@ class SearchCode(object):
 			self.languages.set(language_list[0]) # default value
 		except Exception, e:
 			# Redirect to save new code page
+			no_data_yet = True
 			SaveCode(master)
 			# When language list is empty and no search data is found
 			# Go to the savecode page with master argument
@@ -54,6 +59,7 @@ class SearchCode(object):
 
 		self.search_bu = Button(self.row2, text="Search",command=self.search_code)
 		self.search_bu.pack(side="left")
+
 		self.cancel_bu = Button(self.row2, text="Cancel",command=self.clear_all_widgets)
 		self.cancel_bu.pack(side="left")
 
@@ -122,7 +128,7 @@ class SearchCode(object):
 			rate = compare.ratio()
 			if rate > 0.45:
 				self.search_data.append(snippet)
-		# import pdb; pdb.set_trace()
+		
 		# Show this data on a clickable format
 		if not self.result_box.winfo_manager():
 			self.result_box.pack()
@@ -131,6 +137,7 @@ class SearchCode(object):
 			self.result_box.insert(END, data_fragment['title'])
 
 		self.result_box.bind("<Double-Button-1>", self.open_search_item)
+
 
 	def open_search_item(self, event):
 		"""
@@ -180,7 +187,6 @@ class SearchCode(object):
 
 	def clear_all_widgets(self):
 		self.title_ent.delete(0,END)
-		# if not self.result_box.winfo_manager():
 		self.result_box.pack_forget()
 
 		
@@ -242,16 +248,20 @@ class SaveCode(object):
 		self.row4 = Frame(self.save_window)
 		self.row4.pack()
 
-		self.save_but = Button(self.row4, text='Save',padx=10, pady=20,width=15, command=self.save_code)
+		self.save_but = Button(self.row4, text='Save To Vault',padx=10, pady=20,width=15, command=self.save_code)
 		self.save_but.pack(side='left')
 
-		self.save_but = Button(self.row4, text='Cancel',padx=10, pady=20,width=15, command=self.clear_all_widgets)
-		self.save_but.pack(side='left')
+		self.cancel_but = Button(self.row4, text='Cancel',padx=10, pady=20,width=15, command=self.clear_all_widgets)
+		self.cancel_but.pack(side='left')
+
+		if not no_data_yet:
+			self.search_but = Button(self.save_window, text='Search Vault',padx=10, pady=20,width=15, command=self.open_search_window)
+			self.search_but.pack(side='bottom')
 
 		self.quit = Button(self.row4, text="Quit", padx=10, pady=20,width=15,command=self.save_window.destroy)
 		self.quit.pack(side='bottom')
 		
-		self.save_window.geometry("900x600")
+		self.save_window.geometry("900x650")
 
 		if master:
 			# Main loop of master will run from this window only when first time code
@@ -260,6 +270,8 @@ class SaveCode(object):
 
 
 	def save_code(self):
+		global no_data_yet
+
 		filepath = datapath + self.language_ent.get() + ".json"
 		# read data from file if available
 		try:
@@ -288,6 +300,18 @@ class SaveCode(object):
 
 		self.clear_all_widgets()
 
+		# import pdb; pdb.set_trace()
+		if no_data_yet:
+			no_data_yet = False
+			self.search_but = Button(self.save_window, text='Search',padx=10, pady=20,width=15, command=self.open_search_window)
+			self.search_but.pack(side="bottom")
+
+	def open_search_window(self):
+		global main_window
+		self.save_window.destroy()
+		root = Tk()
+		main_window = SearchCode(root)
+
 
 	def clear_all_widgets(self):
 		# clear all widgets and make them ready for new entry
@@ -299,11 +323,12 @@ class SaveCode(object):
 
 
 if __name__ == '__main__':
+	global main_window
 
 	if not os.path.exists(datapath):
 		# Create new data directory if it does not exist
 		os.makedirs(datapath)
 
 	root = Tk()
-	SearchCode(root)
+	main_window = SearchCode(root)
 
