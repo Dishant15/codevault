@@ -8,8 +8,6 @@ Never lose your favourite code gems ever again!!
 
 
 Future Expansion :-
-	- Implement tag search
-	- Add security and robustness of the input widgets
 	- Show all code entries for a language
 		- edit/delete options for selected code snippets
 	- Syntex highlighting in the code boxes

@@ -173,7 +173,7 @@ class SearchCode(object):
 		
 		for data_fragment in self.search_data:
 			tag_str = '] ['.join([ x.title() for x in data_fragment['tags'] ])
-			self.result_box.insert(END, data_fragment['title'] + " : [" + tag_str + "]")
+			self.result_box.insert(END, data_fragment['title'].title() + " : [" + tag_str + "]")
 
 		self.result_box.bind("<Double-Button-1>", self.open_search_item)
 
@@ -329,6 +329,14 @@ class SaveCode(object):
 		global no_data_yet,language_list, main_window
 
 		language = self.language_ent.get()
+		if language == "":
+			tkMessageBox.showerror("Data input error", "Enter language name of the code snippet")
+			return
+
+		title = self.title_ent.get()
+		if title == "":
+			tkMessageBox.showerror("Data input error", "Enter Title of the code snippet which will be used to search it in the future.")
+			return
 
 		filepath = datapath + language + ".json"
 		# read data from file if available
@@ -342,7 +350,7 @@ class SaveCode(object):
 		tags = [ x.strip().lower() for x in self.tags_ent.get().split(',') ]
 		# Check for required and empty fields ------------------
 		new_data = {
-			'title' : self.title_ent.get(),
+			'title' : title,
 			'tags' : tags,
 			"code" : self.code_box.get(0.0,END),
 			"example" : self.example_ent.get(0.0,END),
