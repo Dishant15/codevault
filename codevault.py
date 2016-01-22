@@ -72,6 +72,14 @@ class SearchCode(object):
 		self.title_ent = Entry(self.row1, width = 30 )
 		self.title_ent.pack(side='left')
 
+		self.tag_frame = Frame(self.search_window, pady=15,padx=15)
+		self.tag_frame.pack()
+
+		self.tags_lab = Label(self.tag_frame, text='Tags : ')
+		self.tags_lab.pack(side='left')
+		self.tags_ent = Entry(self.tag_frame, width = 50 )
+		self.tags_ent.pack(side='left')
+
 		self.row2 = Frame(self.search_window, pady=15,padx=15)
 		self.row2.pack()
 
@@ -91,7 +99,7 @@ class SearchCode(object):
 
 		self.quit = Button(self.bot, text="Quit", padx=10, pady=20,width=15,command=self.search_window.destroy)
 		self.quit.pack(side='left')
-		self.add_code = Button(self.bot, text="Save Code", padx=10, pady=20,width=15,command=lambda:SaveCode())
+		self.add_code = Button(self.bot, text="Save New Code", padx=10, pady=20,width=15,command=lambda:SaveCode())
 		self.add_code.pack(side="left")
 
 		self.search_window.geometry("900x600")
@@ -123,25 +131,49 @@ class SearchCode(object):
 		shows all data that match nearly 45% and show it on a list box
 		"""
 		title = self.title_ent.get()
+		tags = [ x.strip().lower() for x in self.tags_ent.get().split(',') ]
 		data = self.get_file_data()
-		self.search_data = []
-		self.result_box.delete(0, END)
+		tags_search_data = []
+		title_search_data = []
 
-		compare = difflib.SequenceMatcher()
-		compare.set_seq1(title.lower())
+		if title == "" and tags == [""]:
+			tkMessageBox.showerror("Data input error", "To search from the code vault please enter TAGS or TITLE that you need to search")
+			return
 
-		for snippet in data:
-			compare.set_seq2(snippet['title'].lower())
-			rate = compare.ratio()
-			if rate > 0.45:
-				self.search_data.append(snippet)
+		if tags != [""]:
+			# tags are added as search parameters
+			for snippet in data:
+				for each_tag in tags:
+					if each_tag in snippet['tags']:
+						tags_search_data.append(snippet)
+						break
+
+		if title != "":
+			# compare title of code snippets and get matching
+			compare = difflib.SequenceMatcher()
+			compare.set_seq1(title.lower())
+			if tags_search_data != []:
+				# search only in data found with tag matching
+				data = tags_search_data
+			for snippet in data:
+				compare.set_seq2(snippet['title'].lower())
+				rate = compare.ratio()
+				if rate > 0.45:
+					title_search_data.append(snippet)
 		
+		self.result_box.delete(0, END)
 		# Show this data on a clickable format
 		if not self.result_box.winfo_manager():
 			self.result_box.pack()
+
+		if title_search_data != []:
+			self.search_data = title_search_data
+		else:
+			self.search_data = tags_search_data + title_search_data
 		
 		for data_fragment in self.search_data:
-			self.result_box.insert(END, data_fragment['title'])
+			tag_str = '] ['.join([ x.title() for x in data_fragment['tags'] ])
+			self.result_box.insert(END, data_fragment['title'] + " : [" + tag_str + "]")
 
 		self.result_box.bind("<Double-Button-1>", self.open_search_item)
 
@@ -155,7 +187,12 @@ class SearchCode(object):
 		on Button click
 		"""
 		# get index of the element that was clicked
-		clicked_on = self.result_box.curselection()[0]
+		try:
+			clicked_on = self.result_box.curselection()[0]
+		except Exception, e:
+			tkMessageBox.showerror("Data input error", "No code snippet found")
+			return
+		
 		selected = self.search_data[clicked_on]
 		# selected containes the data to be shown
 		# Show it in another top level window
@@ -194,13 +231,15 @@ class SearchCode(object):
 
 	def clear_all_widgets(self):
 		self.title_ent.delete(0,END)
+		self.tags_ent.delete(0,END)
 		self.result_box.pack_forget()
 
 	def refresh_languages(self):
 		global language_list
 		import Tkinter as tk
-		self.language_ent['menu'].delete(0, 'end')
 
+		# clear all current options from options menu
+		self.language_ent['menu'].delete(0, 'end')
 		# Insert list of new options (tk._setit hooks them up to var)
 		for lang in language_list:
 			self.language_ent['menu'].add_command(label=lang, command=tk._setit(self.language, lang))
@@ -300,7 +339,7 @@ class SaveCode(object):
 			data = []
 		# Add current data to existing data
 
-		tags = [ x.strip() for x in self.tags_ent.get().split(',') ]
+		tags = [ x.strip().lower() for x in self.tags_ent.get().split(',') ]
 		# Check for required and empty fields ------------------
 		new_data = {
 			'title' : self.title_ent.get(),
