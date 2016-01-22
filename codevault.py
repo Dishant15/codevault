@@ -16,6 +16,8 @@ datapath = dirpath + data_folder + '/'
 
 # Variable used to takle first time save of code snippet
 no_data_yet = False
+# Main utility is for updating language options on search window when
+# new language code is saved from save window
 main_window = None
 
 def get_languages_from_files():
@@ -298,7 +300,7 @@ class SaveCode(object):
 			data = []
 		# Add current data to existing data
 
-		tags = self.tags_ent.get().split(',')  # Remove white space from tags --------------
+		tags = [ x.strip() for x in self.tags_ent.get().split(',') ]
 		# Check for required and empty fields ------------------
 		new_data = {
 			'title' : self.title_ent.get(),
@@ -319,8 +321,9 @@ class SaveCode(object):
 		if no_data_yet:
 			# First time data saved , enable search button now
 			no_data_yet = False
-			self.search_but = Button(self.save_window, text='Search',padx=10, pady=20,width=15, command=self.open_search_window)
+			self.search_but = Button(self.save_window, text='Search Vault',padx=10, pady=20,width=15, command=self.open_search_window)
 			self.search_but.pack(side="bottom")
+			language_list.append(language)
 		else:
 			# Refresh options menu in search window if code for new language added
 			if language not in language_list:
