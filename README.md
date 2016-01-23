@@ -8,7 +8,7 @@ Never lose your favourite code gems ever again!!
 
 
 Future Expansion :-
-	- Show all code entries for a language
-		- edit/delete options for selected code snippets
-	- Syntex highlighting in the code boxes
-	- Language search box auto complete from language list
+- Show all code entries for a language
+    - edit/delete options for selected code snippets
+- Syntex highlighting in the code boxes
+- Language search box auto complete from language list
