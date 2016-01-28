@@ -10,6 +10,8 @@ from Tkinter import *
 import os, datetime
 import json, difflib, tkMessageBox
 
+from entry_auto_complete import AutocompleteEntry
+
 dirpath = os.path.dirname(__file__)
 data_folder = 'data'
 datapath = dirpath + data_folder + '/'
@@ -89,7 +91,7 @@ class SearchCode(object):
 		self.search_bu = Button(self.row2, text="Search",command=self.search_code)
 		self.search_bu.pack(side="left")
 
-		self.cancel_bu = Button(self.row2, text="Cancel",command=self.clear_all_widgets)
+		self.cancel_bu = Button(self.row2, text="Clear",command=self.clear_all_widgets)
 		self.cancel_bu.pack(side="left")
 
 		self.row3 = Frame(self.search_window)
@@ -132,6 +134,8 @@ class SearchCode(object):
 			self.result_box.pack()
 
 		self.data = self.get_file_data()
+
+		self.search_data = self.data
 		
 		for data_fragment in self.search_data:
 			tag_str = '] ['.join([ x.title() for x in data_fragment['tags'] ])
@@ -237,10 +241,46 @@ class SearchCode(object):
 		example_bu = Button(top_frame, text='Copy Example Code',padx=10, pady=20,width=15, command=lambda:self.copy_to_clipboard(selected['example']))
 		example_bu.pack(side='top')
 
-		quit = Button(top_frame, text="Done", padx=10, pady=20,width=15,command=self.top.destroy)
-		quit.pack(side='bottom')
+		bot_frame = Frame(self.top)
+		bot_frame.pack()
+
+		save_change = Button(bot_frame, text="Save Changes", padx=10, pady=20,width=15,command=lambda:self.update_data(selected,code_box,example_ent))
+		save_change.pack(side='left')
+
+		quit = Button(bot_frame, text="Close", padx=10, pady=20,width=15,command=self.top.destroy)
+		quit.pack(side='left')
 
 		self.top.geometry("900x600")
+
+	def update_data(self,old_data,code_box,example_ent):
+		filepath = datapath + self.language.get() + ".json"
+		try:
+			self.data.remove( old_data )
+		except Exception, e:
+			# Raised due to 2 reasons
+			# 1 - File do not exist and no data
+			# 2 - old_data is not in data
+			pass
+
+		new_data = {
+			'title' : old_data['title'],
+			'tags' : old_data['tags'],
+			"code" : code_box.get(0.0,END),
+			"example" : example_ent.get(0.0,END),
+		}
+		
+		if new_data not in self.data:
+			self.data.append( new_data )
+		# write new updated data back to the file
+		try:
+			jsonfile = open( filepath, 'w' )
+			jsonfile.write( json.dumps( self.data, indent = 4 ) )
+			jsonfile.close()
+		except Exception, e:
+			print e
+		self.top.destroy()
+		self.clear_all_widgets()
+
 
 	def copy_to_clipboard(self,data):
 		self.search_window.clipboard_clear()
@@ -285,6 +325,7 @@ class SaveCode(object):
 
 		self.language_lab = Label(self.row1, text='Language : ')
 		self.language_lab.pack(side='left')
+		# self.language_ent = AutocompleteEntry(language_list, self.row1)
 		self.language_ent = Entry(self.row1, width = 10 )
 		self.language_ent.pack(side='left')
 
