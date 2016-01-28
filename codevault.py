@@ -83,6 +83,9 @@ class SearchCode(object):
 		self.row2 = Frame(self.search_window, pady=15,padx=15)
 		self.row2.pack()
 
+		self.show_all_bu = Button(self.row2, text="Show All Codes",command=self.show_all_code)
+		self.show_all_bu.pack(side="left")
+
 		self.search_bu = Button(self.row2, text="Search",command=self.search_code)
 		self.search_bu.pack(side="left")
 
@@ -122,6 +125,20 @@ class SearchCode(object):
 			data = []
 		return data
 
+	def show_all_code(self):
+		self.result_box.delete(0, END)
+		# Show this data on a clickable format
+		if not self.result_box.winfo_manager():
+			self.result_box.pack()
+
+		self.data = self.get_file_data()
+		
+		for data_fragment in self.search_data:
+			tag_str = '] ['.join([ x.title() for x in data_fragment['tags'] ])
+			self.result_box.insert(END, data_fragment['title'].title() + " : [" + tag_str + "]")
+
+		self.result_box.bind("<Double-Button-1>", self.open_search_item)
+
 	def search_code(self):
 		"""
 		Function called by search Button
@@ -132,7 +149,7 @@ class SearchCode(object):
 		"""
 		title = self.title_ent.get()
 		tags = [ x.strip().lower() for x in self.tags_ent.get().split(',') ]
-		data = self.get_file_data()
+		self.data = self.get_file_data()
 		tags_search_data = []
 		title_search_data = []
 
@@ -142,7 +159,7 @@ class SearchCode(object):
 
 		if tags != [""]:
 			# tags are added as search parameters
-			for snippet in data:
+			for snippet in self.data:
 				for each_tag in tags:
 					if each_tag in snippet['tags']:
 						tags_search_data.append(snippet)
@@ -154,8 +171,8 @@ class SearchCode(object):
 			compare.set_seq1(title.lower())
 			if tags_search_data != []:
 				# search only in data found with tag matching
-				data = tags_search_data
-			for snippet in data:
+				self.data = tags_search_data
+			for snippet in self.data:
 				compare.set_seq2(snippet['title'].lower())
 				rate = compare.ratio()
 				if rate > 0.45:
