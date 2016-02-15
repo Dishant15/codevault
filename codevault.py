@@ -198,6 +198,17 @@ class SearchCode(object):
 
 		self.result_box.bind("<Double-Button-1>", self.open_search_item)
 
+	def highlight_keywords(self, widget):
+		import keyword
+
+		widget.tag_configure("keywords", foreground="yellow")
+
+		kw_list = keyword.kwlist
+		for kws in kw_list:
+			index = widget.search(kws,"1.0", stopindex="end")
+			if index != "":
+				widget.tag_add("keywords", index, "%s+%dc" %(index,len(kws)))
+
 
 	def open_search_item(self, event):
 		"""
@@ -228,6 +239,8 @@ class SearchCode(object):
 		code_box = Text( top_frame, width=120, height=10, background="#555555", foreground="white", wrap = "word", pady=10, padx=5 )
 		code_box.pack(side='top')
 		code_box.insert(0.0, selected['code'])
+
+		# self.highlight_keywords(code_box)
 
 		code_bu = Button(top_frame, text='Copy Code',padx=10, pady=20,width=15, command=lambda:self.copy_to_clipboard(selected['code']))
 		code_bu.pack(side='top')
