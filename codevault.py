@@ -324,6 +324,8 @@ class SaveCode(object):
 	# appHighlightFont = font.Font(family='Helvetica', size=12, weight='bold')
 
 	def __init__(self, master=None):
+		import ttk
+
 		if master:
 			self.save_window = master
 		else:
@@ -339,8 +341,9 @@ class SaveCode(object):
 		self.language_lab = Label(self.row1, text='Language : ')
 		self.language_lab.pack(side='left')
 		# self.language_ent = AutocompleteEntry(language_list, self.row1)
-		self.language_ent = Entry(self.row1, width = 10 )
+		self.language_ent = ttk.Combobox(self.row1, width = 10 )
 		self.language_ent.pack(side='left')
+		self.language_ent['values'] = language_list
 
 		self.title_lab = Label(self.row1, text='Title : ')
 		self.title_lab.pack(side='left')
@@ -442,10 +445,12 @@ class SaveCode(object):
 			self.search_but = Button(self.save_window, text='Search Vault',padx=10, pady=20,width=15, command=self.open_search_window)
 			self.search_but.pack(side="bottom")
 			language_list.append(language)
+			self.language_ent['values'] = language_list
 		else:
 			# Refresh options menu in search window if code for new language added
 			if language not in language_list:
 				language_list.append(language)
+				self.language_ent['values'] = language_list
 				main_window.refresh_languages()
 
 		self.clear_all_widgets()

@@ -9,4 +9,3 @@ Never lose your favourite code gems ever again!!
 
 Future Expansion :-
 - Syntex highlighting in the code boxes
-- Language search box auto complete from language list
